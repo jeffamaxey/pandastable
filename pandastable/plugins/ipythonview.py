@@ -119,8 +119,8 @@ class IterableIPShell:
         Update self.IP namespace for autocompletion with sys.modules
         '''
         for k, v in list(sys.modules.items()):
-            if not '.' in k:
-              self.IP.user_ns.update({k:v})
+            if '.' not in k:
+                self.IP.user_ns.update({k:v})
 
     def execute(self):
         '''
@@ -144,32 +144,30 @@ class IterableIPShell:
                 self.IP.rl_do_indent = True
 
         try:
-          line = self.IP.raw_input(self.prompt)
+            line = self.IP.raw_input(self.prompt)
         except KeyboardInterrupt:
           self.IP.write('\nKeyboardInterrupt\n')
           self.IP.input_splitter.reset()
         except:
           self.IP.showtraceback()
         else:
-          self.IP.input_splitter.push(line)
-          self.iter_more = self.IP.input_splitter.push_accepts_more()
-          self.prompt = self.generatePrompt(self.iter_more)
-          if (self.IP.SyntaxTB.last_syntax_error and
-              self.IP.autoedit_syntax):
-              self.IP.edit_syntax_error()
-          if not self.iter_more:
-              if parse_version(IPython.release.version) >= parse_version("2.0.0-dev"):
-                source_raw = self.IP.input_splitter.raw_reset()
-              else:
-                source_raw = self.IP.input_splitter.source_raw_reset()[1]
-              self.IP.run_cell(source_raw, store_history=True)
-              self.IP.rl_do_indent = False
-          else:
-              # TODO: Auto-indent
-              #
-              self.IP.rl_do_indent = True
-              pass
-
+            self.IP.input_splitter.push(line)
+            self.iter_more = self.IP.input_splitter.push_accepts_more()
+            self.prompt = self.generatePrompt(self.iter_more)
+            if (self.IP.SyntaxTB.last_syntax_error and
+                self.IP.autoedit_syntax):
+                self.IP.edit_syntax_error()
+            if not self.iter_more:
+                if parse_version(IPython.release.version) >= parse_version("2.0.0-dev"):
+                  source_raw = self.IP.input_splitter.raw_reset()
+                else:
+                  source_raw = self.IP.input_splitter.source_raw_reset()[1]
+                self.IP.run_cell(source_raw, store_history=True)
+                self.IP.rl_do_indent = False
+            else:
+                # TODO: Auto-indent
+                #
+                self.IP.rl_do_indent = True
         sys.stdout = orig_stdout
         sys.stdin = orig_stdin
 
@@ -189,14 +187,13 @@ class IterableIPShell:
         #
         ver = IPython.__version__
         if '0.11' in ver:
-            prompt = self.IP.hooks.generate_prompt(is_continuation)
+            return self.IP.hooks.generate_prompt(is_continuation)
         else:
-            if is_continuation:
-                prompt = self.IP.prompt_manager.render('in2')
-            else:
-                prompt = self.IP.prompt_manager.render('in')
-
-        return prompt
+            return (
+                self.IP.prompt_manager.render('in2')
+                if is_continuation
+                else self.IP.prompt_manager.render('in')
+            )
 
 
     def historyBack(self):
@@ -394,10 +391,11 @@ class TkConsoleView(Text):
 
         if not editable:
             if self.debug:
-                print ("adding notouch between %s : %s" % ( self.index(self.start_mark),\
-                                 self.index(INSERT)))
+                print(
+                    f"adding notouch between {self.index(self.start_mark)} : {self.index(INSERT)}"
+                )
 
-            self.tag_add('notouch',self.start_mark,"%s-1c" % INSERT)
+            self.tag_add('notouch', self.start_mark, f"{INSERT}-1c")
         self.mark_unset(self.start_mark)
         return
 
@@ -411,20 +409,20 @@ class TkConsoleView(Text):
         self.see(INSERT) #Make sure we can always see the prompt
 
     def changeLine(self, text):
-        self.delete(self.line_start,"%s lineend" % self.line_start)
+        self.delete(self.line_start, f"{self.line_start} lineend")
         self.write(text, True)
 
     def getCurrentLine(self):
         rv = self.get(self.line_start, END)
         if self.debug:
-            print ("getCurrentline: %s" % rv)
-            print ("INSERT: %s" % END)
-            print ("END: %s" % INSERT)
-            print ("line_start: %s" % self.index(self.line_start))
+            print(f"getCurrentline: {rv}")
+            print(f"INSERT: {END}")
+            print(f"END: {INSERT}")
+            print(f"line_start: {self.index(self.line_start)}")
         return rv
 
     def showReturned(self, text):
-        self.tag_add('notouch',self.line_start,"%s lineend" % self.line_start )
+        self.tag_add('notouch', self.line_start, f"{self.line_start} lineend")
         self.write('\n'+text)
         if text:
           self.write('\n')
@@ -454,10 +452,10 @@ class TkConsoleView(Text):
                 continue
             else:
                 if self.debug:
-                    print ("Comparing %s between %s : %s " % (self.index(IPythonINSERT),first,idx))
+                    print(f"Comparing {self.index(IPythonINSERT)} between {first} : {idx} ")
 
                 if self.compare( INSERT,'>=',first ) and \
-                   self.compare( INSERT,'<=',idx ):
+                       self.compare( INSERT,'<=',idx ):
                     return False
             first=None
         return True
@@ -465,16 +463,16 @@ class TkConsoleView(Text):
     def processKeyPress(self,event):
 
         if self.debug:
-            print ("processKeyPress got key: %s" % event.char)
-            print ("processKeyPress INSERT: %s" % self.index(INSERT))
-            print ("processKeyPress END: %s" % self.index(END))
+            print(f"processKeyPress got key: {event.char}")
+            print(f"processKeyPress INSERT: {self.index(INSERT)}")
+            print(f"processKeyPress END: {self.index(END)}")
 
         if not self.isEditable():
             # Move cursor mark to start of line
             self.mark_set(INSERT,self.mark)
 
         # Make sure line_start follows inserted text
-        self.mark_set(self.mark,"%s+1c" %INSERT)
+        self.mark_set(self.mark, f"{INSERT}+1c")
 
     def processBackSpacePress(self,event):
         if not self.isEditable():
@@ -522,11 +520,11 @@ class TkConsoleView(Text):
                               labels=('Font:', 'Size:'),
                               types=('combobox','combobox'),
                               parent = self)
-        if d.result == None:
+        if d.result is None:
             return
         font = d.results[0]
         size = d.results[1]
-        self.config(font='"%s" %s' %(font, size))
+        self.config(font=f'"{font}" {size}')
         return
 
 class IPythonView(TkConsoleView, IterableIPShell):
@@ -557,7 +555,7 @@ class IPythonView(TkConsoleView, IterableIPShell):
         #print (rv)
         rv = self.strip_non_ascii(rv)
         if self.debug:
-            print ("_processLine got rv: %s" % rv)
+            print(f"_processLine got rv: {rv}")
         if rv:
             rv = rv.strip('\n')
         self.showReturned(rv)
@@ -582,7 +580,7 @@ class IPythonPlugin(Plugin):
 
     def main(self, parent):
 
-        if parent==None:
+        if parent is None:
             return
         self.parent = parent
         self._doFrame()

@@ -121,10 +121,7 @@ class PlotViewer(Frame):
             g = '800x500+900+300'
             self.main.geometry(g)
         self.toolslayout = layout
-        if layout == 'horizontal':
-            self.orient = VERTICAL
-        else:
-            self.orient = HORIZONTAL
+        self.orient = VERTICAL if layout == 'horizontal' else HORIZONTAL
         self.mplopts = MPLBaseOptions(parent=self)
         self.mplopts3d = MPL3DOptions(parent=self)
         self.labelopts = AnnotationOptions(parent=self)
@@ -171,11 +168,7 @@ class PlotViewer(Frame):
         #button frame
         bf = Frame(self.ctrlfr, padding=2)
         bf.pack(side=TOP,fill=BOTH)
-        if self.toolslayout== 'vertical':
-            side = TOP
-        else:
-            side = LEFT
-
+        side = TOP if self.toolslayout== 'vertical' else LEFT
         #add button toolbar
         addButton(bf, 'Plot', self.replot, images.plot(),
                   'plot current data', side=side, compound="left", width=20)
@@ -212,6 +205,7 @@ class PlotViewer(Frame):
 
         def onpick(event):
             print(event)
+
         #self.fig.canvas.mpl_connect('pick_event', onpick)
         #self.fig.canvas.mpl_connect('button_release_event', onpick)
         from . import handlers
@@ -287,10 +281,7 @@ class PlotViewer(Frame):
         current table selection"""
 
         #print (self.table.getSelectedRows())
-        if data is None:
-            self.data = self.table.getSelectedDataFrame()
-        else:
-            self.data = data
+        self.data = self.table.getSelectedDataFrame() if data is None else data
         self.updateStyle()
         self.applyPlotoptions()
         self.plotCurrent()
@@ -355,25 +346,23 @@ class PlotViewer(Frame):
         layout = self.globalopts['grid layout']
         plot3d = self.globalopts['3D plot']
 
-        #plot layout should be tracked by plotlayoutoptions
-        gl = self.layoutopts
-
-        if plot3d == 1:
-            proj = '3d'
-        else:
-            proj = None
+        proj = '3d' if plot3d == 1 else None
         if layout == 0:
             #default layout is just a single axis
             self.fig.clear()
             self.gridaxes={}
             self.ax = self.fig.add_subplot(111, projection=proj)
         else:
+            #plot layout should be tracked by plotlayoutoptions
+            gl = self.layoutopts
+
             #get grid layout from layout opt
             rows = gl.rows
             cols = gl.cols
             x = gl.selectedrows
             y = gl.selectedcols
-            r=min(x); c=min(y)
+            r=min(x)
+            c=min(y)
             rowspan = gl.rowspan
             colspan = gl.colspan
             top = .92
@@ -385,7 +374,7 @@ class PlotViewer(Frame):
             hs = rows/10-.05
             gs = self.gridspec = GridSpec(rows,cols,top=top,bottom=bottom,
                                           left=0.1,right=0.9,wspace=ws,hspace=hs)
-            name = str(r+1)+','+str(c+1)
+            name = f'{str(r + 1)},{str(c + 1)}'
             if name in self.gridaxes:
                 ax = self.gridaxes[name]
                 if ax in self.fig.axes:
@@ -413,13 +402,12 @@ class PlotViewer(Frame):
         """Set a subplot title if using grid layout"""
 
         axname = self.layoutopts.axeslistvar.get()
-        if not axname in self.gridaxes:
+        if axname not in self.gridaxes:
             return
         ax = self.gridaxes[axname]
-        label = simpledialog.askstring("Subplot title",
-                                      "Title:",initialvalue='',
-                                       parent=self.parent)
-        if label:
+        if label := simpledialog.askstring(
+            "Subplot title", "Title:", initialvalue='', parent=self.parent
+        ):
             ax.set_title(label)
             self.canvas.show()
         return
@@ -464,14 +452,13 @@ class PlotViewer(Frame):
         kwds['legend'] = False
         rows = gl.rows
         cols = gl.cols
-        c=0; i=0
+        c=0
+        i=0
         data = self.data
         n = rows * cols
         chunks = np.array_split(data, n)
-        proj=None
         plot3d = self.globalopts['3D plot']
-        if plot3d == True:
-            proj='3d'
+        proj = '3d' if plot3d == True else None
         for r in range(0,rows):
             for c in range(0,cols):
                 self.data = chunks[i]
@@ -523,7 +510,7 @@ class PlotViewer(Frame):
 
         kwds['edgecolor'] = 'black'
         #valid kwd args for this plot type
-        kwargs = dict((k, kwds[k]) for k in valid_kwds[kind] if k in kwds)
+        kwargs = {k: kwds[k] for k in valid_kwds[kind] if k in kwds}
         #initialise the figure
         #self._initFigure()
         ax = self.ax
@@ -539,16 +526,15 @@ class PlotViewer(Frame):
             g = data.groupby(by)
 
             if kwargs['subplots'] == True:
-                i=1
                 if len(g) > 30:
-                    self.showWarning('%s is too many subplots' %len(g))
+                    self.showWarning(f'{len(g)} is too many subplots')
                     return
                 size = len(g)
                 nrows = round(np.sqrt(size),0)
                 ncols = np.ceil(size/nrows)
                 self.ax.set_visible(False)
                 kwargs['subplots'] = None
-                for n,df in g:
+                for i, (n, df) in enumerate(g, start=1):
                     if ncols==1 and nrows==1:
                         ax = self.fig.add_subplot(111)
                         self.ax.set_visible(True)
@@ -560,8 +546,6 @@ class PlotViewer(Frame):
                                   bw=bw, yerr=None, kwargs=kwargs)
                     ax.set_title(n)
                     handles, labels = ax.get_legend_handles_labels()
-                    i+=1
-
                 if 'sharey' in kwargs and kwargs['sharey'] == True:
                     self.autoscale()
                 if  'sharex' in kwargs and kwargs['sharex'] == True:
@@ -574,7 +558,8 @@ class PlotViewer(Frame):
                 #single plot grouped only apply to some plot kinds
                 #the remainder are not supported
                 axs = self.ax
-                labels = []; handles=[]
+                labels = []
+                handles=[]
                 cmap = plt.cm.get_cmap(kwargs['colormap'])
                 #handle as pivoted data for some line, bar
                 if kind in ['line','bar','barh']:
@@ -604,10 +589,7 @@ class PlotViewer(Frame):
                             handles.append(sc[0])
                             c+=1
                     if kwargs['legend'] == True:
-                        if slen>6:
-                            lc = int(np.round(slen/10))
-                        else:
-                            lc = 1
+                        lc = int(np.round(slen/10)) if slen>6 else 1
                         axs.legend([])
                         axs.legend(handles, legnames, ncol=lc)
                 else:
@@ -694,13 +676,10 @@ class PlotViewer(Frame):
         l=None
         u=None
         for ax in self.fig.axes:
-            if axis=='y':
-                a, b  = ax.get_ylim()
-            else:
-                a, b  = ax.get_xlim()
-            if l == None or a<l:
+            a, b = ax.get_ylim() if axis=='y' else ax.get_xlim()
+            if l is None or a < l:
                 l=a
-            if u == None or b>u:
+            if u is None or b > u:
                 u=b
         lims = (l, u)
         print (lims)
@@ -734,10 +713,7 @@ class PlotViewer(Frame):
         rows = int(round(np.sqrt(len(data.columns)),0))
         if len(data.columns) == 1 and kind not in ['pie']:
             kwargs['subplots'] = 0
-        if 'colormap' in kwargs:
-            cmap = plt.cm.get_cmap(kwargs['colormap'])
-        else:
-            cmap = None
+        cmap = plt.cm.get_cmap(kwargs['colormap']) if 'colormap' in kwargs else None
         #change some things if we are plotting in b&w
         styles = []
         if bw == True and kind not in ['pie','heatmap']:
@@ -748,19 +724,15 @@ class PlotViewer(Frame):
             if 'linestyle' in kwargs:
                 del kwargs['linestyle']
 
-        if subplots == 0:
-            layout = None
-        else:
-            layout=(rows,-1)
-
-        if errorbars == True and yerr == None:
+        layout = None if subplots == 0 else (rows, -1)
+        if errorbars == True and yerr is None:
             yerr = data[data.columns[1::2]]
-            data = data[data.columns[0::2]]
+            data = data[data.columns[::2]]
             yerr.columns = data.columns
             plt.rcParams['errorbar.capsize']=4
-            #kwargs['elinewidth'] = 1
+                #kwargs['elinewidth'] = 1
 
-        if kind == 'bar' or kind == 'barh':
+        if kind in ['bar', 'barh']:
             if len(data) > 50:
                 ax.get_xaxis().set_visible(False)
             if len(data) > 300:
@@ -823,14 +795,10 @@ class PlotViewer(Frame):
             if useindex == False:
                 x=data.columns[0]
                 data.set_index(x,inplace=True)
-            if kwargs['legend'] == True:
-                lbls=None
-            else:
-                lbls = list(data.index)
-
+            lbls = None if kwargs['legend'] == True else list(data.index)
             axs = data.plot(ax=ax,kind='pie', labels=lbls, layout=layout,
                             autopct='%1.1f%%', subplots=True, **kwargs)
-            if lbls == None:
+            if lbls is None:
                 axs[0].legend(labels=data.index, loc='best')
         elif kind == 'venn':
             axs = self.venn(data, ax, **kwargs)

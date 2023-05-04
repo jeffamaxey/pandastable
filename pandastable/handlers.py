@@ -69,11 +69,11 @@ class DragHandler(object):
     def on_pick_event(self, event):
         " Store which text object was picked and were the pick event occurs."
 
-        df = self.parent.data
         self.dragged = event.artist
         #print(self.dragged)
         if isinstance(event.artist, PathCollection):
             ind = event.ind
+            df = self.parent.data
             print('onpick scatter:', ind, df.ix[ind])
         elif isinstance(event.artist, Line2D):
             thisline = event.artist
@@ -126,7 +126,7 @@ class DragHandler(object):
         """Handle key press"""
 
         if event.key == 'delete':
-            if self.selected == None:
+            if self.selected is None:
                 return
             self.selected.set_visible(False)
             fig = self.parent.fig
@@ -152,11 +152,18 @@ class DragHandler(object):
         x1,y1 = bb[1]
         print (x,y,x1,y1)
         pad = (x1-x)/10
-        self.selectedrect = FancyBboxPatch((x, y),
-                                 abs(x1-x), abs(y1-y),
-                                 boxstyle="round,pad=%s" %pad, lw=2, alpha=0.5,
-                                 ec="red", fc="red", zorder=10.,
-                                 transform=ax.transAxes)
+        self.selectedrect = FancyBboxPatch(
+            (x, y),
+            abs(x1 - x),
+            abs(y1 - y),
+            boxstyle=f"round,pad={pad}",
+            lw=2,
+            alpha=0.5,
+            ec="red",
+            fc="red",
+            zorder=10.0,
+            transform=ax.transAxes,
+        )
         ax.add_patch(self.selectedrect)
         fig.canvas.draw()
         return

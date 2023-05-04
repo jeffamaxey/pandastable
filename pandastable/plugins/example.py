@@ -40,7 +40,7 @@ class ExamplePlugin(Plugin):
     def main(self, parent):
         """Customise this or _doFrame for your widgets"""
 
-        if parent==None:
+        if parent is None:
             return
         self.parent = parent
         self.parentframe = None
@@ -86,6 +86,4 @@ class ExamplePlugin(Plugin):
     def about(self):
         """About this plugin"""
 
-        txt = "This plugin implements ...\n"+\
-               "version: %s" %self.version
-        return txt
+        return "This plugin implements ...\n" + f"version: {self.version}"

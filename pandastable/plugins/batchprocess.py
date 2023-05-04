@@ -80,7 +80,7 @@ class BatchProcessPlugin(Plugin):
 
     def main(self, parent):
         self.parent=parent
-        if parent==None:
+        if parent is None:
             self.main=Toplevel()
             self.master=self.main
             self.main.title('Batch Process')
@@ -169,7 +169,7 @@ class BatchProcessPlugin(Plugin):
     def addFolder(self, path=None):
         """Get a folder"""
 
-        if path==None:
+        if path is None:
             path = filedialog.askdirectory(parent=self.main,
                                             initialdir=self.currentdir,
                                             title='Select folder')
@@ -240,7 +240,7 @@ class BatchProcessPlugin(Plugin):
                                 labels=['How to Import:'],
                                 types=['combobox'],
                                 parent = self.mainwin)
-        if d.result == None:
+        if d.result is None:
             return
         how = d.results[0]
         if how == 'join':
@@ -270,7 +270,7 @@ class BatchProcessPlugin(Plugin):
 
         self.path = None
         df = self.pt.model.df
-        self.pt.model.df = df.iloc[0:0]
+        self.pt.model.df = df.iloc[:0]
         self.pt.redraw()
         return
 
@@ -316,8 +316,7 @@ class BatchProcessPlugin(Plugin):
         """Get row/col selections from main table for plotting"""
 
         table = self.parent.getCurrentTable()
-        cols = table.multiplecollist
-        return cols
+        return table.multiplecollist
 
     def pdfPages(self):
         """Create pdf pages object"""
@@ -332,7 +331,7 @@ class BatchProcessPlugin(Plugin):
         path='test_batch'
         for i in range(20):
             df = TableModel.getSampleData()
-            df.to_csv(os.path.join(path,'test%s.csv' %str(i)))
+            df.to_csv(os.path.join(path, f'test{str(i)}.csv'))
         return
 
 def main():

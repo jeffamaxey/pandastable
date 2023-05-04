@@ -325,24 +325,15 @@ class DataExplore(Frame):
         if var is None:
             var = Menu(menu,tearoff=0)
         dialogs.applyStyle(var)
-        items = list(dict.keys())
-        items.sort()
+        items = sorted(dict.keys())
         for item in items:
             if item[-3:] == 'sep':
                 var.add_separator()
             else:
                 command = dict[item]['cmd']
                 label = '%-25s' %(item[2:])
-                if 'img' in dict[item]:
-                    img = dict[item]['img']
-                else:
-                    img = None
-                if 'sc' in dict[item]:
-                    sc = dict[item]['sc']
-                    #bind command
-                    #self.main.bind(sc, command)
-                else:
-                    sc = None
+                img = dict[item]['img'] if 'img' in dict[item] else None
+                sc = dict[item]['sc'] if 'sc' in dict[item] else None
                 var.add('command', label=label, command=command, image=img,
                         compound="left")#, accelerator=sc)
         dict['var'] = var
@@ -413,15 +404,12 @@ class DataExplore(Frame):
     def saveMeta(self, table):
         """Save meta data such as current plot options"""
 
-        meta = {}
-        #save plot options
-        meta['mplopts'] = table.pf.mplopts.kwds
-        meta['mplopts3d'] = table.pf.mplopts3d.kwds
-        meta['labelopts'] = table.pf.labelopts.kwds
-        #print (table.pf.mplopts.kwds)
-
-        #save table selections
-        meta['table'] = util.getAttributes(table)
+        meta = {
+            'mplopts': table.pf.mplopts.kwds,
+            'mplopts3d': table.pf.mplopts3d.kwds,
+            'labelopts': table.pf.labelopts.kwds,
+            'table': util.getAttributes(table),
+        }
         meta['plotviewer'] = util.getAttributes(table.pf)
         #print (meta['plotviewer'])
         #save row colors since its a dataframe and isn't picked up by getattributes currently
@@ -437,9 +425,8 @@ class DataExplore(Frame):
         """Save global app options to config dir"""
 
         appfile = os.path.join(self.configpath, 'app.p')
-        file = open(appfile,'wb')
-        pickle.dump(self.appoptions, file, protocol=2)
-        file.close()
+        with open(appfile,'wb') as file:
+            pickle.dump(self.appoptions, file, protocol=2)
         return
 
     def loadAppOptions(self):
@@ -449,15 +436,14 @@ class DataExplore(Frame):
         if os.path.exists(appfile):
             self.appoptions = pickle.load(open(appfile,'rb'))
         else:
-            self.appoptions = {}
-            self.appoptions['recent'] = []
+            self.appoptions = {'recent': []}
         return
 
     def newProject(self, data=None, df=None):
         """Create a new project from data or empty"""
 
         w = self.closeProject()
-        if w == None:
+        if w is None:
             return
         self.sheets = OrderedDict()
         self.sheetframes = {} #store references to enclosing widgets
@@ -470,10 +456,7 @@ class DataExplore(Frame):
                 if s == 'meta':
                     continue
                 df = data[s]['table']
-                if 'meta' in data[s]:
-                    meta = data[s]['meta']
-                else:
-                    meta=None
+                meta = data[s]['meta'] if 'meta' in data[s] else None
                 #try:
                 self.addSheet(s, df, meta)
                 '''except Exception as e:
@@ -489,13 +472,11 @@ class DataExplore(Frame):
     def loadProject(self, filename=None, asksave=False):
         """Open project file"""
 
-        w=True
-        if asksave == True:
-            w = self.closeProject()
-        if w == None:
+        w = self.closeProject() if asksave == True else True
+        if w is None:
             return
 
-        if filename == None:
+        if filename is None:
             filename = filedialog.askopenfilename(defaultextension='.dexpl"',
                                                     initialdir=self.defaultsavedir,
                                                     filetypes=[("project","*.dexpl"),
@@ -517,7 +498,7 @@ class DataExplore(Frame):
                 data = pickle.load(gzip.GzipFile(filename, 'r'))
             except OSError as oe:
                 msg = 'DataExplore can no longer open the old format project files.\n'\
-                'if you really need the file revert to pandastable<=0.12.1 and save the data.'
+                    'if you really need the file revert to pandastable<=0.12.1 and save the data.'
                 messagebox.showwarning("Project open error", msg)
                 return
             #create backup file before we change anything
@@ -529,7 +510,7 @@ class DataExplore(Frame):
             return
         self.newProject(data)
         self.filename = filename
-        self.main.title('%s - DataExplore' %filename)
+        self.main.title(f'{filename} - DataExplore')
         self.projopen = True
         self.defaultsavedir = os.path.dirname(os.path.abspath(filename))
         self.addRecent(filename)
@@ -548,7 +529,7 @@ class DataExplore(Frame):
         """Add file name to recent projects"""
 
         recent = self.appoptions['recent']
-        if not os.path.abspath(filename) in recent:
+        if os.path.abspath(filename) not in recent:
             if len(recent)>=5:
                 recent.pop(0)
             recent.append(os.path.abspath(filename))
@@ -560,7 +541,7 @@ class DataExplore(Frame):
 
         if filename != None:
             self.filename = filename
-        if not hasattr(self, 'filename') or self.filename == None:
+        if not hasattr(self, 'filename') or self.filename is None:
             self.saveasProject()
         else:
             self.doSaveProject(self.filename)
@@ -588,10 +569,7 @@ class DataExplore(Frame):
         data={}
         for i in self.sheets:
             table = self.sheets[i]
-            data[i] = {}
-            data[i]['table'] = table.model.df
-            data[i]['meta'] = self.saveMeta(table)
-
+            data[i] = {'table': table.model.df, 'meta': self.saveMeta(table)}
         #pd.to_msgpack(filename, data, encoding='utf-8')
         #changed to pickle format
         file = gzip.GzipFile(filename, 'w')
@@ -617,12 +595,10 @@ class DataExplore(Frame):
             w = messagebox.askyesnocancel("Close Project",
                                         "Save this project?",
                                         parent=self.master)
-        if w==None:
+        if w is None:
             return
         elif w==True:
             self.saveProject()
-        else:
-            pass
         for n in self.nb.tabs():
             self.nb.forget(n)
         self.filename = None
@@ -733,10 +709,13 @@ class DataExplore(Frame):
                 return 0
 
         noshts = len(self.nb.tabs())
-        if sheetname == None:
-            sheetname = simpledialog.askstring("New sheet name?", "Enter sheet name:",
-                                                initialvalue='sheet'+str(noshts+1))
-        if sheetname == None:
+        if sheetname is None:
+            sheetname = simpledialog.askstring(
+                "New sheet name?",
+                "Enter sheet name:",
+                initialvalue=f'sheet{str(noshts + 1)}',
+            )
+        if sheetname is None:
             return
         if checkName(sheetname) == 0:
             return
@@ -806,7 +785,7 @@ class DataExplore(Frame):
         newname = simpledialog.askstring("New sheet name?",
                                           "Enter new sheet name:",
                                           initialvalue=s)
-        if newname == None:
+        if newname is None:
             return
         self.copySheet(newname)
         self.deleteSheet()
@@ -828,15 +807,13 @@ class DataExplore(Frame):
         """Get current sheet name"""
 
         s = self.nb.index(self.nb.select())
-        name = self.nb.tab(s, 'text')
-        return name
+        return self.nb.tab(s, 'text')
 
     def getCurrentTable(self):
 
         s = self.nb.index(self.nb.select())
         name = self.nb.tab(s, 'text')
-        table = self.sheets[name]
-        return table
+        return self.sheets[name]
 
     def getSheetList(self):
         return list(self.sheets.keys())
@@ -867,17 +844,16 @@ class DataExplore(Frame):
                                 labels=('Table 1','Table 2'),
                                 types=('combobox','combobox'),
                                 parent = self.master)
-        if d.result == None:
+        if d.result is None:
             return
-        else:
-            s1 = d.results[0]
-            s2 = d.results[1]
+        s1 = d.results[0]
+        s2 = d.results[1]
         if s1 == s2:
             return
         df1 = self.sheets[s1].model.df
         df2 = self.sheets[s2].model.df
         m = pd.concat([df1,df2])
-        self.addSheet('concat-%s-%s' %(s1,s2),m)
+        self.addSheet(f'concat-{s1}-{s2}', m)
         return
 
     def sampleData(self):
@@ -888,7 +864,7 @@ class DataExplore(Frame):
                                 labels=('Rows','Columns'),
                                 types=('int','int'),
                                 parent = self.master)
-        if d.result == None:
+        if d.result is None:
             return
         rows=d.results[0]
         cols=d.results[1]
@@ -896,7 +872,7 @@ class DataExplore(Frame):
         name='sample'
         i=1
         while name in self.sheets:
-            name='sample'+str(i)
+            name = f'sample{str(i)}'
             i+=1
         self.addSheet(sheetname=name, df=df, select=True)
         return
@@ -954,11 +930,12 @@ class DataExplore(Frame):
     def installPlugin(self):
         """Adds a user supplied .py file to plugin folder"""
 
-        filename = filedialog.askopenfilename(defaultextension='.py"',
-                                              initialdir=os.getcwd(),
-                                              filetypes=[("python","*.py")],
-                                              parent=self.main)
-        if filename:
+        if filename := filedialog.askopenfilename(
+            defaultextension='.py"',
+            initialdir=os.getcwd(),
+            filetypes=[("python", "*.py")],
+            parent=self.main,
+        ):
             import shutil
             shutil.copy(filename, self.pluginpath)
             self.updatePluginMenu()
@@ -1108,20 +1085,21 @@ class DataExplore(Frame):
         pandasver = pd.__version__
         pythonver = platform.python_version()
         mplver = matplotlib.__version__
-        if self._check_snap == True:
-            snap='(snap)'
-        else:
-            snap=''
-
-        text='DataExplore Application\n'\
-                +'version '+__version__+snap+'\n'\
-                +'Copyright (C) Damien Farrell 2014-\n'\
-                +'This program is free software; you can redistribute it and/or\n'\
-                +'modify it under the terms of the GNU General Public License\n'\
-                +'as published by the Free Software Foundation; either version 3\n'\
-                +'of the License, or (at your option) any later version.\n'\
-                +'Using Python v%s\n' %pythonver\
-                +'pandas v%s, matplotlib v%s' %(pandasver,mplver)
+        snap = '(snap)' if self._check_snap == True else ''
+        text = (
+            'DataExplore Application\n'
+            + 'version '
+            + __version__
+            + snap
+            + '\n'
+            + 'Copyright (C) Damien Farrell 2014-\n'
+            + 'This program is free software; you can redistribute it and/or\n'
+            + 'modify it under the terms of the GNU General Public License\n'
+            + 'as published by the Free Software Foundation; either version 3\n'
+            + 'of the License, or (at your option) any later version.\n'
+            + 'Using Python v%s\n' % pythonver
+            + f'pandas v{pandasver}, matplotlib v{mplver}'
+        )
 
         row=1
         #for line in text:
@@ -1205,23 +1183,22 @@ def main():
     opts, remainder = parser.parse_args()
     if opts.test == True:
         app = TestApp()
+    elif opts.projfile != None:
+        if not os.path.exists(opts.projfile):
+            print('no such file')
+            return
+        app = DataExplore(projfile=opts.projfile)
+    elif opts.msgpack != None:
+        app = DataExplore(msgpack=opts.msgpack)
+    elif opts.csv != None:
+        app = DataExplore()
+        t = app.getCurrentTable()
+        t.importCSV(opts.csv, dialog=True)
+    elif opts.excel != None:
+        app = DataExplore()
+        app.importExcel(opts.excel)
     else:
-        if opts.projfile != None:
-            if not os.path.exists(opts.projfile):
-                print('no such file')
-                return
-            app = DataExplore(projfile=opts.projfile)
-        elif opts.msgpack != None:
-            app = DataExplore(msgpack=opts.msgpack)
-        elif opts.csv != None:
-            app = DataExplore()
-            t = app.getCurrentTable()
-            t.importCSV(opts.csv, dialog=True)
-        elif opts.excel != None:
-            app = DataExplore()
-            app.importExcel(opts.excel)
-        else:
-            app = DataExplore()
+        app = DataExplore()
     app.mainloop()
     return
 

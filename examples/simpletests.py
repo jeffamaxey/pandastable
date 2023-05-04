@@ -106,8 +106,9 @@ def multiple_tables():
     """make many tables in one frame"""
 
     t = Toplevel(height=800)
-    r=0;c=0
-    for i in range(6):
+    r=0
+    c=0
+    for _ in range(6):
         fr = Frame(t)
         fr.grid(row=r,column=c)
         pt = make_table(fr, showtoolbar=False, showstatusbar=True)

@@ -50,7 +50,7 @@ class DiffExpressionPlugin(Plugin):
 
     def main(self, parent):
 
-        if parent==None:
+        if parent is None:
             return
         self.parent = parent
         self._doFrame()
@@ -185,11 +185,10 @@ class DiffExpressionPlugin(Plugin):
         cutoff = float(self.tkvars['logfc_cutoff'].get())
         res = self.result
         key = 'adj.P.Val'
-        if not key in res.columns:
+        if key not in res.columns:
             key = 'PValue'
         res = res[(res.logFC>cutoff) | (res.logFC<-cutoff)]
-        res = res[res[key]<=0.05]
-        return res
+        return res[res[key]<=0.05]
 
     def plotGenes(self):
 
@@ -233,12 +232,12 @@ class DiffExpressionPlugin(Plugin):
     def about(self):
         """About this plugin"""
 
-        txt = "This plugin implements differential expression\n"+\
-              "for gene counts from sequencing data. \n"+\
-              "see http://dmnfarrell.github.io/dataexplore/2017/07/24/diff-expression. \n"+\
-               "version: %s" %self.version
-
-        return txt
+        return (
+            "This plugin implements differential expression\n"
+            + "for gene counts from sequencing data. \n"
+            + "see http://dmnfarrell.github.io/dataexplore/2017/07/24/diff-expression. \n"
+            + f"version: {self.version}"
+        )
 
 def get_column_names(df):
     """Get count data sample column names"""
@@ -258,14 +257,14 @@ def get_columns_by_label(labels, samplecol, filters=[], querystr=None):
         (see pandas.DataFrame.query documentation)
     """
 
-    if querystr == None:
+    if querystr is None:
         q=[]
         for f in filters:
             print (f)
             if type(f[1]) in ['int','float']:
-                s = "%s==%s" %(f[0],f[1])
+                s = f"{f[0]}=={f[1]}"
             else:
-                s = "%s=='%s'" %(f[0],f[1])
+                s = f"{f[0]}=='{f[1]}'"
             q.append(s)
         querystr = ' & '.join(q)
     print (querystr)
@@ -297,18 +296,15 @@ def get_factor_samples(df, labels, factors, filters=[],
         print (cols)
         cols = list(set(cols) & set(df.columns))
         x = df[cols]
-        print ('%s samples, %s genes' %(len(cols),len(x)))
+        print(f'{len(cols)} samples, {len(x)} genes')
         if len(x.columns)==0:
             #no data found warning
-            print ('WARNING: no data for %s' %f)
+            print(f'WARNING: no data for {f}')
             continue
         print()
-        x.columns = ['s'+str(cols.index(i))+'_'+str(l) for i in x.columns]
+        x.columns = [f's{cols.index(i)}_{str(l)}' for i in x.columns]
         l+=1
-        if res is None:
-            res = x
-        else:
-            res = res.join(x)
+        res = x if res is None else res.join(x)
     res=res.dropna()
     return res
 
@@ -321,9 +317,12 @@ def melt_samples(df, labels, names, samplecol='filename', index='name'):
     t=df.T
     t.index = scols
     t = t.merge(labels,left_index=True,right_on=samplecol)
-    m = pd.melt(t,id_vars=list(labels.columns),
-                 var_name='name',value_name='read count')
-    return m
+    return pd.melt(
+        t,
+        id_vars=list(labels.columns),
+        var_name='name',
+        value_name='read count',
+    )
 
 def run_edgeR(countsfile=None, data=None):
     """Run edgeR from R script"""
@@ -333,7 +332,7 @@ def run_edgeR(countsfile=None, data=None):
         data.to_csv(countsfile)
     path = os.path.dirname(os.path.abspath(__file__)) #path to module
     descript = os.path.join(path, 'DEanalysis.R')
-    cmd = 'Rscript %s %s' %(descript, countsfile)
+    cmd = f'Rscript {descript} {countsfile}'
     print (cmd)
     result = subprocess.check_output(cmd, shell=True, executable='/bin/bash')
     print (result)
@@ -351,7 +350,7 @@ def run_limma(countsfile=None, data=None):
         data.to_csv(countsfile)
     path = os.path.dirname(os.path.abspath(__file__)) #path to module
     descript = os.path.join(path, 'Limma.R')
-    cmd = 'Rscript %s %s' %(descript, countsfile)
+    cmd = f'Rscript {descript} {countsfile}'
     result = subprocess.check_output(cmd, shell=True, executable='/bin/bash')
     #read result back in
     de = pd.read_csv('limma_output.csv')
@@ -368,7 +367,7 @@ def md_plot(data, de, title=''):
     data['mean log expr'] = data.mean(1).apply(np.log)
     df = data.merge(de,on='name')
     key = 'adj.P.Val'
-    if not key in df.columns:
+    if key not in df.columns:
         key = 'PValue'
     a = df[df[key]<=0.05]
     b = df[-df.name.isin(a.name)]

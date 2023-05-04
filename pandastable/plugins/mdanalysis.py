@@ -51,7 +51,7 @@ class MultivariatePlugin(Plugin):
 
     def main(self, parent):
 
-        if parent==None:
+        if parent is None:
             return
         self.parent = parent
         self._doFrame()
@@ -145,11 +145,7 @@ class MultivariatePlugin(Plugin):
         plot3d = self.tkvars['3d_plot'].get()
         transform = self.tkvars['transform'].get()
 
-        if sel == 1:
-            data = self.table.getSelectedDataFrame()
-        else:
-            data = self.table.model.df
-
+        data = self.table.getSelectedDataFrame() if sel == 1 else self.table.model.df
         #setup plot
         self.pf._initFigure()
         if plot3d == True:
@@ -254,7 +250,7 @@ def do_pca(X, c=3):
     S = pd.DataFrame(preprocessing.scale(X),columns = X.columns)
     pca = PCA(n_components=c)
     pca.fit(S)
-    out = 'explained variance %s' %pca.explained_variance_ratio_
+    out = f'explained variance {pca.explained_variance_ratio_}'
     print (out)
     #print pca.components_
     w = pd.DataFrame(pca.components_,columns=S.columns)
@@ -267,7 +263,7 @@ def plot_matrix(pX, plot3d=False, palette='Spectral', labels=False, ax=None,
              colors=None, **kwargs):
     """Plot PCA result, input should be a dataframe"""
 
-    if ax==None:
+    if ax is None:
         fig,ax = plt.subplots(1,1,figsize=(6,6))
     #print (kwargs)
     colormap = kwargs['colormap']

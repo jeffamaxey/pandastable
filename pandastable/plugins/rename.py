@@ -112,7 +112,7 @@ class BatchRenamePlugin(Plugin):
     def addFolder(self,path=None):
         """Get a folder"""
 
-        if path==None:
+        if path is None:
             path = filedialog.askdirectory(parent=self.main,
                                             initialdir=self.currentdir,
                                             title='Select folder')
@@ -173,7 +173,7 @@ def doRename(files=None, wildcard=None, pattern='', replacement='', rename=False
     """Rename all files in a directory using replacement"""
 
     newfiles = []
-    if files==None:
+    if files is None:
         files = glob.glob(wildcard)
     for pathname in files:
         basename= os.path.basename(pathname)
@@ -190,18 +190,16 @@ def doFindReplace(files=None, wildcard=None, find='', replace='', rename=False):
     """Find replace method"""
 
     newfiles = []
-    if files==None:
+    if files is None:
         files = glob.glob(wildcard)
     for pathname in files:
         basename= os.path.basename(pathname)
         new_filename = basename.replace(find,replace)
         newfiles.append(new_filename)
-        if new_filename != basename:
-
-            if rename == True:
-                os.rename(pathname,
-                          os.path.join(os.path.dirname(pathname),
-                          new_filename))
+        if new_filename != basename and rename == True:
+            os.rename(pathname,
+                      os.path.join(os.path.dirname(pathname),
+                      new_filename))
     return newfiles
 
 def constructRegex(inputstr):

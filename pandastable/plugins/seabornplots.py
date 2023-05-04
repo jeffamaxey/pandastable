@@ -48,7 +48,7 @@ class SeabornPlugin(Plugin):
 
     def main(self, parent):
 
-        if parent==None:
+        if parent is None:
             return
         self.parent = parent
         self._doFrame()
@@ -151,10 +151,23 @@ class SeabornPlugin(Plugin):
         else:
             t = df
         try:
-            g = sns.factorplot(x=x,y='value',data=t, hue=hue, col=col, row=row,
-                            col_wrap=wrap, kind=kind,size=3, aspect=float(aspect),
-                            legend_out=False, sharey='all', palette=palette, order=order,
-                            ci=ci)
+            g = sns.factorplot(
+                x=x,
+                y='value',
+                data=t,
+                hue=hue,
+                col=col,
+                row=row,
+                col_wrap=wrap,
+                kind=kind,
+                size=3,
+                aspect=aspect,
+                legend_out=False,
+                sharey='all',
+                palette=palette,
+                order=order,
+                ci=ci,
+            )
             self.g = g
         except Exception as e:
             self.showWarning(e)
@@ -177,9 +190,7 @@ class SeabornPlugin(Plugin):
                 ax.set_yscale('log')
 
         plt.tight_layout()
-        bottom = 0.1
-        if xlabelrot>30:
-            bottom=0.2
+        bottom = 0.2 if xlabelrot>30 else 0.1
         self.fig.subplots_adjust(top=0.9, bottom=bottom)
         self.canvas.draw()
         return
@@ -259,13 +270,13 @@ class SeabornPlugin(Plugin):
     def about(self):
         """About this plugin"""
 
-        txt = "This plugin implements factor plotting using\n"+\
-              "the seaborn library which provides an interface\n"+\
-              "for drawing attractive statistical graphics.\n\n"+\
-              "http://stanford.edu/~mwaskom/software/seaborn/\n\n"\
-               "version: %s" %self.version
-
-        return txt
+        return (
+            "This plugin implements factor plotting using\n"
+            + "the seaborn library which provides an interface\n"
+            + "for drawing attractive statistical graphics.\n\n"
+            + "http://stanford.edu/~mwaskom/software/seaborn/\n\n"
+            "version: %s" % self.version
+        )
 
     def _importSeaborn(self):
         """Try to import seaborn. If not installed return false"""

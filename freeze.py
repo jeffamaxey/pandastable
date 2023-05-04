@@ -24,10 +24,7 @@ build_exe_options = {"packages": ["os","numpy","matplotlib","pandas",
                      "includes": includes,
                      "include_files": includefiles}
 
-base = None
-if sys.platform == "win32":
-    base = "Win32GUI"
-
+base = "Win32GUI" if sys.platform == "win32" else None
 executables = [Executable("main.py", base=base,
                           #copyDependentFiles = True,
                           targetName='DataExplore.exe',

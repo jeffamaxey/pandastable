@@ -121,21 +121,14 @@ class StatsViewer(Frame):
         df = self.table.model.df
         df = df.convert_objects(convert_numeric='force')
         cols = list(df.columns)
-        if len(cols)>1:
-            formula = '%s ~ %s' %(cols[1], cols[0])
-        else:
-            formula = None
-        return formula
+        return f'{cols[1]} ~ {cols[0]}' if len(cols)>1 else None
 
     def getModel(self, formula, data, est='ols'):
         """Select model to use"""
 
         s = self.table.multiplerowlist
-        if len(s) == 0:
-            sub = data.index
-        else:
-            sub = data.index[s]
-        self.sub = sub        
+        sub = data.index if len(s) == 0 else data.index[s]
+        self.sub = sub
         y,X = dmatrices(formula, data=data, return_type='dataframe')
         self.X = X
         self.y = y
@@ -176,7 +169,7 @@ class StatsViewer(Frame):
 
         pf = self.pf
         fit = self.fit
-        if fit == None:
+        if fit is None:
             pf.showWarning('no fitted model')
             return
         df = self.table.model.df
@@ -195,7 +188,7 @@ class StatsViewer(Frame):
             indvar = self.model.exog_names[1]
 
         if kind == 'default':
-            if isinstance(self.model, sm.OLS) or isinstance(self.model, sm.GLS):
+            if isinstance(self.model, (sm.OLS, sm.GLS)):
                 self.plotRegression(fit, indvar, ax=ax, **kwds)
             elif isinstance(self.model, sm.Logit):
                 self.plotLogit(fit, indvar, ax)
@@ -205,7 +198,7 @@ class StatsViewer(Frame):
             try:
                 sm.graphics.plot_fit(fit, indvar, ax=ax)
             except ValueError:
-                pf.showWarning('%s is not an independent variable' %indvar,ax=ax)
+                pf.showWarning(f'{indvar} is not an independent variable', ax=ax)
         elif kind == 'regression plots':
             fig.clear()
             sm.graphics.plot_regress_exog(fit, indvar, fig=fig)
@@ -242,8 +235,14 @@ class StatsViewer(Frame):
         import statsmodels.tools.eval_measures as em
         yt = yout.squeeze().values
         rmse = em.rmse(yt, ypred)
-        ax.text(0.9,0.1,'rmse: '+ str(round(rmse,3)),ha='right',
-                    va='top', transform=ax.transAxes)
+        ax.text(
+            0.9,
+            0.1,
+            f'rmse: {str(round(rmse, 3))}',
+            ha='right',
+            va='top',
+            transform=ax.transAxes,
+        )
         return
 
     def plotRegression(self, fit, indvar, ax, **kwds):
@@ -288,10 +287,16 @@ class StatsViewer(Frame):
             ax.text(0.9,i, k+': '+ str(round(p,3)), ha='right',
                         va='top', transform=ax.transAxes)
             i+=.05
-        ax.text(0.1,0.05, 'R2: '+ str(fit.rsquared), ha='left',
-                        va='top', transform=ax.transAxes)
+        ax.text(
+            0.1,
+            0.05,
+            f'R2: {str(fit.rsquared)}',
+            ha='left',
+            va='top',
+            transform=ax.transAxes,
+        )
         ax.legend()
-        ax.set_title('fitted versus %s' %indvar)
+        ax.set_title(f'fitted versus {indvar}')
         ax.set_xlabel(indvar)
         ax.set_ylabel(depvar)
 
@@ -322,7 +327,7 @@ class StatsViewer(Frame):
 
         s = self.fit.summary()
         from .dialogs import SimpleEditor
-        if not hasattr(self, 'fitinfo') or self.fitinfo == None:
+        if not hasattr(self, 'fitinfo') or self.fitinfo is None:
             self.w = w = Toplevel(self.parent)
             def deletewin():
                 self.fitinfo = None
@@ -335,7 +340,7 @@ class StatsViewer(Frame):
         return
 
     @classmethod
-    def _doimport(self):
+    def _doimport(cls):
         """Try to import statsmodels. If not installed return false"""
         try:
             import statsmodels

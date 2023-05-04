@@ -49,7 +49,7 @@ class TableModel(object):
     def setup(self, dataframe, rows=20, columns=5):
         """Create table model"""
 
-        if not dataframe is None:
+        if dataframe is not None:
             self.df = dataframe
         else:
             colnames = list(string.ascii_lowercase[:columns])
@@ -95,16 +95,15 @@ class TableModel(object):
         return df
 
     @classmethod
-    def getIrisData(self):
+    def getIrisData(cls):
         """Get iris dataset"""
 
         path = os.path.dirname(__file__)
         cols = ['sepal length','sepal width','petal length','petal width','class']
-        df = pd.read_csv(os.path.join(path,'datasets','iris.data'),names=cols)
-        return df
+        return pd.read_csv(os.path.join(path,'datasets','iris.data'),names=cols)
 
     @classmethod
-    def getStackedData(self):
+    def getStackedData(cls):
         """Get a dataframe to pivot test"""
 
         import pandas.util.testing as tm; tm.N = 4
@@ -152,22 +151,16 @@ class TableModel(object):
         df = self.df
         col = df.columns[colindex]
         try:
-            if df.dtypes[col] == 'float64':
-                c = df[col][:n].round(3)
-            else:
-                c = df[col][:n]
+            c = df[col][:n].round(3) if df.dtypes[col] == 'float64' else df[col][:n]
         except:
             return 1
         longest = c.astype('object').astype('str').str.len().max()
-        if np.isnan(longest):
-            return 1
-        return longest
+        return 1 if np.isnan(longest) else longest
 
     def getRecordAtRow(self, rowindex):
         """Get the entire record at the specifed row"""
 
-        record = self.df.iloc[rowindex]
-        return record
+        return self.df.iloc[rowindex]
 
     def moveColumn(self, oldindex, newindex):
         """Changes the order of columns"""
@@ -276,7 +269,7 @@ class TableModel(object):
 
         df = self.df
         name = df.index.name
-        if name == None: name='index'
+        if name is None: name='index'
         df[name] = df.index#.astype('object')
         return
 
@@ -285,13 +278,11 @@ class TableModel(object):
 
         df = self.df
         colnames = df.columns[cols]
-        grps = df.groupby(colnames)
-        return grps
+        return df.groupby(colnames)
 
     def getColumnType(self, columnIndex):
         """Get the column type"""
-        coltype = self.df.dtypes[columnIndex]
-        return coltype
+        return self.df.dtypes[columnIndex]
 
     def getColumnCount(self):
          """Returns the number of columns in the data model"""
@@ -309,14 +300,12 @@ class TableModel(object):
          return len(self.df)
 
     def getValueAt(self, row, col):
-         """Returns the cell value at location specified
+        """Returns the cell value at location specified
              by columnIndex and rowIndex."""
 
-         df = self.df
-         value = self.df.iloc[row,col]
-         if type(value) is float and np.isnan(value):
-             return ''
-         return value
+        df = self.df
+        value = self.df.iloc[row,col]
+        return '' if type(value) is float and np.isnan(value) else value
 
     def setValueAt(self, value, row, col, df=None):
         """Change dataframe according to row/col numbers. You can
@@ -379,4 +368,4 @@ class TableModel(object):
         return
 
     def __repr__(self):
-        return 'Table Model with %s rows' %len(self.df)
+        return f'Table Model with {len(self.df)} rows'

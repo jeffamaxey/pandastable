@@ -48,7 +48,7 @@ class DataReaderPlugin(Plugin):
 
     def main(self, parent):
 
-        if parent==None:
+        if parent is None:
             return
         self.parent = parent
         self._doFrame(width=480,height=140)
@@ -151,9 +151,7 @@ class DataReaderPlugin(Plugin):
         try:
             df = pd.read_csv(url)
         except Exception as e:
-            messagebox.showwarning("Failed to read URL",
-                                   "%s" %e,
-                                   parent=self.parent)
+            messagebox.showwarning("Failed to read URL", f"{e}", parent=self.parent)
             df=None
         return df
 
@@ -206,8 +204,9 @@ class DataReaderPlugin(Plugin):
     def about(self):
         """About this plugin"""
 
-        txt = "This plugin allows fetching of remote data from\n"+\
-              "multiple sources of public data using the pandas\n"+\
-              "datareader. See https://pandas-datareader.readthedocs.io\n"+\
-              "version: %s" %self.version
-        return txt
+        return (
+            "This plugin allows fetching of remote data from\n"
+            + "multiple sources of public data using the pandas\n"
+            + "datareader. See https://pandas-datareader.readthedocs.io\n"
+            + f"version: {self.version}"
+        )

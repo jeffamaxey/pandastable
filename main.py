@@ -42,20 +42,19 @@ def main():
     opts, remainder = parser.parse_args()
     if opts.test == True:
         app = TestApp()
+    elif opts.projfile != None:
+        app = DataExplore(projfile=opts.projfile)
+    elif opts.msgpack != None:
+        app = DataExplore(msgpack=opts.msgpack)
+    elif opts.csv != None:
+        app = DataExplore()
+        t = app.getCurrentTable()
+        t.importCSV(opts.csv, dialog=True)
+    elif opts.excel != None:
+        app = DataExplore()
+        app.importExcel(opts.excel)
     else:
-        if opts.projfile != None:
-            app = DataExplore(projfile=opts.projfile)
-        elif opts.msgpack != None:
-            app = DataExplore(msgpack=opts.msgpack)
-        elif opts.csv != None:
-            app = DataExplore()
-            t = app.getCurrentTable()
-            t.importCSV(opts.csv, dialog=True)
-        elif opts.excel != None:
-            app = DataExplore()
-            app.importExcel(opts.excel)
-        else:
-            app = DataExplore()
+        app = DataExplore()
     app.mainloop()
 
 if __name__ == '__main__':

@@ -187,8 +187,7 @@ class Table(Canvas):
         self.columnwidths = {}
         self.columncolors = {}
         #store general per column formatting as sub dicts
-        self.columnformats = {}
-        self.columnformats['alignment'] = {}
+        self.columnformats = {'alignment': {}}
         self.rowcolors = pd.DataFrame()
         self.highlighted = None
         self.bg = Style().lookup('TLabel.label', 'background')
@@ -351,8 +350,7 @@ class Table(Canvas):
         row = (int(y)-y_start)/h
         if row < 0:
             return 0
-        if row > self.rows:
-            row = self.rows
+        row = min(row, self.rows)
         return int(row)
 
     def getColPosition(self, x):
@@ -374,8 +372,7 @@ class Table(Canvas):
 
         start = self.getRowPosition(y1)
         end = self.getRowPosition(y2)+1
-        if end > self.rows:
-            end = self.rows
+        end = min(end, self.rows)
         return start, end
 
     def getVisibleCols(self, x1, x2):
@@ -383,8 +380,7 @@ class Table(Canvas):
 
         start = self.getColPosition(x1)
         end = self.getColPosition(x2)+1
-        if end > self.cols:
-            end = self.cols
+        end = min(end, self.cols)
         return start, end
 
     def redrawVisible(self, event=None, callback=None):
@@ -445,14 +441,9 @@ class Table(Canvas):
             coldata = df.iloc[rows,col]
             colname = df.columns[col]
             cfa = self.columnformats['alignment']
-            if colname in cfa:
-                align = cfa[colname]
-            else:
-                align = self.align
-            if prec != 0:
-                if coldata.dtype == 'float64':
-                    coldata = coldata.apply(lambda x: self.setPrecision(x, prec), 1)
-                    #print (coldata)
+            align = cfa[colname] if colname in cfa else self.align
+            if prec != 0 and coldata.dtype == 'float64':
+                coldata = coldata.apply(lambda x: self.setPrecision(x, prec), 1)
             coldata = coldata.astype(object).fillna('')
             offset = rows[0]
             for row in self.visiblerows:
@@ -479,10 +470,7 @@ class Table(Canvas):
         """Set precision of a float value"""
 
         if not pd.isnull(x):
-            if x<1:
-                x = '{:.{}g}'.format(x, p)
-            else:
-                x = '{:.{}f}'.format(x, p)
+            x = '{:.{}g}'.format(x, p) if x<1 else '{:.{}f}'.format(x, p)
         return x
 
     def redraw(self, event=None, callback=None):
@@ -514,7 +502,7 @@ class Table(Canvas):
         """Redraw a specific cell only"""
 
         text = self.model.getValueAt(row,col)
-        self.delete('celltext'+str(col)+'_'+str(row))
+        self.delete(f'celltext{str(col)}_{str(row)}')
         self.drawText(row, col, text)
         return
 
@@ -523,9 +511,9 @@ class Table(Canvas):
 
         if clr is None:
             clr = pickColor(self,'#dcf1fc')
-        if clr == None:
+        if clr is None:
             return
-        if cols == None:
+        if cols is None:
             cols = self.multiplecollist
         colnames = self.model.df.columns[cols]
         for c in colnames:
@@ -598,9 +586,9 @@ class Table(Canvas):
 
         if clr is None:
             clr = pickColor(self,'#dcf1fc')
-        if clr == None:
+        if clr is None:
             return
-        if rows == None:
+        if rows is None:
             rows = self.multiplerowlist
         df = self.model.df
         idx = df.index[rows]
@@ -629,7 +617,7 @@ class Table(Canvas):
                                 labels=['colormap:','alpha:'],
                                 types=['combobox','string'],
                                 parent = self.parentframe)
-        if d.result == None:
+        if d.result is None:
             return
         cmap = d.results[0]
         alpha =float(d.results[1])
@@ -672,7 +660,7 @@ class Table(Canvas):
                                 labels=['Align:'],
                                 types=['combobox'],
                                 parent = self.parentframe)
-        if d.result == None:
+        if d.result is None:
             return
         aln = d.results[0]
         for col in cols:
@@ -686,17 +674,13 @@ class Table(Canvas):
             fontsize = self.thefont[1]
         except:
             fontsize = self.fontsize
-        scale = 8.5 * float(fontsize)/9
-        return scale
+        return 8.5 * float(fontsize)/9
 
     def setWrap(self):
         """Toogle column header wrap"""
 
         ch=self.tablecolheader
-        if ch.wrap is False:
-            ch.wrap = True
-        else:
-            ch.wrap = False
+        ch.wrap = ch.wrap is False
         self.redraw()
         return
 
@@ -764,7 +748,7 @@ class Table(Canvas):
             else:
                 w = self.cellwidth
             l = self.model.getlongestEntry(col)
-            txt = ''.join(['X' for i in range(l+1)])
+            txt = ''.join(['X' for _ in range(l+1)])
             tw,tl = util.getTextLength(txt, self.maxcellwidth,
                                        font=self.thefont)
             #print (col,txt,l,tw)
@@ -786,10 +770,9 @@ class Table(Canvas):
         """Determine current column grid positions"""
 
         df = self.model.df
-        self.col_positions=[]
         w = self.cellwidth
         x_pos = self.x_start
-        self.col_positions.append(x_pos)
+        self.col_positions = [x_pos]
         for col in range(self.cols):
             try:
                 colname = df.columns[col].encode('utf-8','ignore').decode('utf-8')
@@ -800,14 +783,14 @@ class Table(Canvas):
             else:
                 x_pos = x_pos+w
             self.col_positions.append(x_pos)
-        self.tablewidth = self.col_positions[len(self.col_positions)-1]
+        self.tablewidth = self.col_positions[-1]
         return
 
     def sortTable(self, columnIndex=None, ascending=1, index=False):
         """Sort rows based on currently selected columns"""
 
         df = self.model.df
-        if columnIndex == None:
+        if columnIndex is None:
             columnIndex = self.multiplecollist
         if isinstance(columnIndex, int):
             columnIndex = [columnIndex]
@@ -891,7 +874,7 @@ class Table(Canvas):
                                 labels=['Level:'],
                                 types=['combobox'],
                                 parent = self.parentframe)
-        if d.result == None:
+        if d.result is None:
             return
         else:
             level = int(d.results[0])
@@ -915,10 +898,9 @@ class Table(Canvas):
         """Rename the row index"""
 
         n = self.model.df.index.name
-        name = simpledialog.askstring("New index name",
-                                      "New name:",initialvalue=n,
-                                       parent=self.parentframe)
-        if name:
+        if name := simpledialog.askstring(
+            "New index name", "New name:", initialvalue=n, parent=self.parentframe
+        ):
             self.model.df.index.name = name
             self.rowindexheader.redraw()
         return
@@ -948,12 +930,9 @@ class Table(Canvas):
         else:
             idx = rc.index.difference(df.index)
             rc.drop(idx,inplace=True)
-        #check columns
-        cols = list(rc.columns.difference(df.columns))
-        if len(cols)>0:
+        if cols := list(rc.columns.difference(df.columns)):
             rc.drop(cols,1,inplace=True)
-        cols = list(df.columns.difference(rc.columns))
-        if len(cols)>0:
+        if cols := list(df.columns.difference(rc.columns)):
             for col in cols:
                 rc[col] = np.nan
         return
@@ -988,7 +967,7 @@ class Table(Canvas):
     def addRows(self, num=None):
         """Add new rows"""
 
-        if num == None:
+        if num is None:
             num = simpledialog.askinteger("Now many rows?",
                                             "Number of rows:",initialvalue=1,
                                              parent=self.parentframe)
@@ -1004,18 +983,17 @@ class Table(Canvas):
     def addColumn(self, newname=None):
         """Add a new column"""
 
-        if newname == None:
+        if newname is None:
             coltypes = ['object','float64']
             d = MultipleValDialog(title='New Column',
                                     initialvalues=(coltypes, ''),
                                     labels=('Column Type','Name'),
                                     types=('combobox','string'),
                                     parent = self.parentframe)
-            if d.result == None:
+            if d.result is None:
                 return
-            else:
-                dtype = d.results[0]
-                newname = d.results[1]
+            dtype = d.results[0]
+            newname = d.results[1]
 
         df = self.model.df
         if newname != None:

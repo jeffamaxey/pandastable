@@ -80,7 +80,7 @@ def write_config(conffile='default.conf', defaults={}):
     if not os.path.exists(conffile):
         cp = create_config_parser_from_dict(defaults)
         cp.write(open(conffile,'w'))
-        print ('wrote config file %s' %conffile)
+        print(f'wrote config file {conffile}')
     return conffile
 
 def create_config_parser_from_dict(data=None, sections=baseoptions.keys(), **kwargs):
@@ -93,7 +93,7 @@ def create_config_parser_from_dict(data=None, sections=baseoptions.keys(), **kwa
     cp = configparser.ConfigParser()
     for s in sections:
         cp.add_section(s)
-        if not s in data:
+        if s not in data:
             continue
         for name in sorted(data[s]):
             val = data[s][name]
@@ -119,15 +119,14 @@ def update_config(options):
 def parse_config(conffile=None):
     """Parse a configparser file"""
 
-    f = open(conffile,'r')
-    cp = configparser.ConfigParser()
-    try:
-        cp.read(conffile)
-    except Exception as e:
-        print ('failed to read config file! check format')
-        print ('Error returned:', e)
-        return
-    f.close()
+    with open(conffile,'r') as f:
+        cp = configparser.ConfigParser()
+        try:
+            cp.read(conffile)
+        except Exception as e:
+            print ('failed to read config file! check format')
+            print ('Error returned:', e)
+            return
     return cp
 
 def get_options(cp):
@@ -254,7 +253,7 @@ class preferencesDialog(Frame):
     def updateFromOptions(self, options):
         """Update all widget tk vars using dict"""
 
-        if self.tkvars == None:
+        if self.tkvars is None:
             return
         #print (options)
         for i in options:

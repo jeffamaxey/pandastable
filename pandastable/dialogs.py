@@ -59,15 +59,15 @@ def getBestGeometry(win, width=None):
 
     ws = win.winfo_screenwidth()
     hs = win.winfo_screenheight()
-    if width == None:
+    if width is None:
         w = ws/1.4; h = hs*0.8
     else:
         w = width
         h = width / 2
 
-    x = (ws/2)-(w/2); y = (hs/2)-(h/2)
-    g = '%dx%d+%d+%d' % (w,h,x,y)
-    return g
+    x = (ws/2)-(w/2)
+    y = (hs/2)-(h/2)
+    return '%dx%d+%d+%d' % (w,h,x,y)
 
 def getParentGeometry(parent):
     x = parent.winfo_rootx()
@@ -79,7 +79,7 @@ def getParentGeometry(parent):
 def getDictfromTkVars(opts, tkvars, widgets):
     kwds = {}
     for i in opts:
-        if not i in tkvars:
+        if i not in tkvars:
             continue
         if opts[i]['type'] == 'listbox':
             items = widgets[i].curselection()
@@ -98,9 +98,7 @@ def pickColor(parent, oldcolor):
     ctuple, newcolor = tkinter.colorchooser.askcolor(title='pick a color',
                                                      initialcolor=oldcolor,
                                                      parent=parent)
-    if ctuple == None:
-        return None
-    return str(newcolor)
+    return None if ctuple is None else str(newcolor)
 
 def dialogFromOptions(parent, opts, groups=None, callback=None,
                         sticky='news',  layout='horizontal'):
@@ -110,7 +108,7 @@ def dialogFromOptions(parent, opts, groups=None, callback=None,
     tkvars = {}
     widgets = {}
     dialog = Frame(parent)
-    if groups == None:
+    if groups is None:
         groups = {'options': opts.keys()}
     c=0
     row=0
@@ -134,14 +132,8 @@ def dialogFromOptions(parent, opts, groups=None, callback=None,
             w=None
             opt = opts[i]
             if opt['type'] == 'entry':
-                if 'label' in opt:
-                    label=opt['label']
-                else:
-                    label=i
-                if 'width' in opt:
-                    w=opt['width']
-                else:
-                    w=6
+                label = opt['label'] if 'label' in opt else i
+                w = opt['width'] if 'width' in opt else 6
                 Label(frame,text=label).pack()
                 if type(opts[i]['default']) is int:
                     tkvars[i] = v = IntVar()
@@ -158,14 +150,8 @@ def dialogFromOptions(parent, opts, groups=None, callback=None,
                 w = Checkbutton(frame,text=opt['label'],
                          variable=v)
             elif opt['type'] == 'combobox':
-                if 'label' in opt:
-                   label=opt['label']
-                else:
-                    label = i
-                if 'width' in opt:
-                    w=opt['width']
-                else:
-                    w=16
+                label = opt['label'] if 'label' in opt else i
+                w = opt['width'] if 'width' in opt else 16
                 Label(frame,text=label).pack()
                 tkvars[i] = v = StringVar()
                 v.set(opts[i]['default'])
@@ -176,32 +162,23 @@ def dialogFromOptions(parent, opts, groups=None, callback=None,
                 if 'tooltip' in opt:
                     ToolTip.createToolTip(w, opt['tooltip'])
             elif opt['type'] == 'spinbox':
-                if 'label' in opt:
-                   label=opt['label']
-                else:
-                    label = i
+                label = opt['label'] if 'label' in opt else i
                 Label(frame,text=label).pack()
                 tkvars[i] = v = StringVar()
                 w = Spinbox(frame, values=opt['items'],
                          textvariable=v,width=w,
                          validatecommand=callback,validate='key')
                 w.set(opt['default'])
-                #if 'tooltip' in opt:
-                #    ToolTip.createToolTip(w, opt['tooltip'])
+                            #if 'tooltip' in opt:
+                            #    ToolTip.createToolTip(w, opt['tooltip'])
             elif opt['type'] == 'listbox':
-                if 'label' in opt:
-                   label=opt['label']
-                else:
-                    label = i
+                label = opt['label'] if 'label' in opt else i
                 Label(frame,text=label).pack()
                 w,v = addListBox(frame, values=opt['items'],width=12)
                 tkvars[i] = v #add widget instead of var
             elif opt['type'] == 'radio':
                 Label(frame,text=label).pack()
-                if 'label' in opt:
-                   label=opt['label']
-                else:
-                    label = i
+                label = opt['label'] if 'label' in opt else i
                 Label(frame,text=label).pack()
                 tkvars[i] = v = StringVar()
                 for item in opt['items']:
@@ -239,7 +216,7 @@ def addButton(frame, name, callback, img=None, tooltip=None,
 
     #style = ttk.Style()
     #style.configure('TButton', padding=1)
-    if img==None:
+    if img is None:
         b = Button(frame, text=name, command=callback)
     else:
         b = Button(frame, text=name, command=callback, width=width,
@@ -337,19 +314,16 @@ class MultipleValDialog(Dialog):
 
     def body(self, master):
 
-        r=0
-        self.vrs=[];self.entries=[]
-        for i in range(len(self.labels)):
+        self.vrs=[]
+        self.entries=[]
+        for r, i in enumerate(range(len(self.labels))):
             Label(master, text=self.labels[i]).grid(row=r,column=0,sticky='news')
             if self.types[i] in ['int','checkbutton']:
                 self.vrs.append(IntVar())
             else:
                 self.vrs.append(StringVar())
             default = self.initialvalues[i]
-            if self.types[i] == 'password':
-                s='*'
-            else:
-                s=None
+            s = '*' if self.types[i] == 'password' else None
             if self.types[i] == 'combobox':
                 self.vrs[i].set(default[0])
                 w = Combobox(master, values=default,
@@ -365,14 +339,13 @@ class MultipleValDialog(Dialog):
                          variable=self.vrs[i])
                 self.entries.append(w)
             else:
-                if default == None:
+                if default is None:
                     default=''
                 self.vrs[i].set(default)
                 self.entries.append(Entry(master, textvariable=self.vrs[i], width=self.maxwidth, show=s))
             self.entries[i].grid(row=r, column=1,padx=2,pady=2,sticky='ew')
             if self.tooltips != None:
                 ToolTip.createToolTip(self.entries[i], self.tooltips[i])
-            r+=1
         s=Style()
         bg = s.lookup('TLabel.label', 'background')
         self.configure(background=bg)
@@ -874,14 +847,11 @@ class CrosstabDialog(BaseDialog):
         df = self.df
         rowdata = [df[r] for r in rows]
         coldata = [df[c] for c in cols]
-        if vals == '':
-            vals=None
-        else:
-            vals=df[vals]
+        vals = None if vals == '' else df[vals]
         if funcs == '':
             funcs=None
         elif len(funcs) != len(cols):
-            funcs = [funcs[0] for i in cols]
+            funcs = [funcs[0] for _ in cols]
 
         self.result = pd.crosstab(rowdata, coldata, values=vals, aggfunc=funcs, margins=margins)
         self.parent.createChildTable(self.result, '', index=True)
@@ -951,10 +921,8 @@ class AggregateDialog(BaseDialog):
         if mapfuncs == True:
             aggdict = (dict(zip(agg,funcs)))
         else:
-            aggdict = {}
             if len(funcs)==1: funcs=funcs[0]
-            for a in agg:
-                aggdict[a] = funcs
+            aggdict = {a: funcs for a in agg}
         #print (aggdict)
         self.result = self.df.groupby(grpcols,as_index=keepcols).agg(aggdict)
         self.parent.createChildTable(self.result, 'aggregated', index=True)
@@ -1009,12 +977,10 @@ class AutoScrollbar(Scrollbar):
     def pack(self, **kw):
         """pack"""
         raise TclError("cannot use pack with this widget")
-        return
 
     def place(self, **kw):
         """place"""
         raise TclError("cannot use place with this widget")
-        return
 
 class VerticalScrolledFrame(Frame):
     """A pure Tkinter scrollable frame \
@@ -1092,19 +1058,13 @@ class EasyListbox(Listbox):
         """Returns the index of the selected item or -1 if no item is selected."""
 
         tup = self.curselection()
-        if len(tup) == 0:
-            return -1
-        else:
-            return tup
+        return -1 if len(tup) == 0 else tup
 
     def getSelectedItem(self):
         """Returns the selected item or the empty string if no item is selected."""
 
         index = self.getSelectedIndex()
-        if index == -1:
-            return ""
-        else:
-            return [self.get(i) for i in index]
+        return "" if index == -1 else [self.get(i) for i in index]
 
     def setSelectedIndex(self, index):
         """Selects the item at the index if it's in the range."""
@@ -1122,10 +1082,7 @@ class EasyListbox(Listbox):
         """Returns the index of item if it's in the list box."""
 
         tup = self.get(0, self.size() - 1)
-        if item in tup:
-            return tup.index(item)
-        else:
-            return -1
+        return tup.index(item) if item in tup else -1
 
 class SimpleEditor(Frame):
     """Simple text editor"""
@@ -1135,7 +1092,7 @@ class SimpleEditor(Frame):
         Frame.__init__(self, parent)
         st = self.text = ScrolledText(self, width=width, height=height, bg='white', fg='black')
         st.pack(in_=self, fill=BOTH, expand=1)
-        if font == None:
+        if font is None:
             if 'Windows' in platform.system():
                 font = ('Courier New',10)
             else:
@@ -1154,11 +1111,11 @@ class SimpleEditor(Frame):
     def onSave(self):
         """Save text"""
 
-        filename = filedialog.asksaveasfilename(defaultextension='.txt',
-                                    initialdir=os.path.expanduser('~'),
-                                     filetypes=(('Text files', '*.txt'),
-                                                ('All files', '*.*')))
-        if filename:
+        if filename := filedialog.asksaveasfilename(
+            defaultextension='.txt',
+            initialdir=os.path.expanduser('~'),
+            filetypes=(('Text files', '*.txt'), ('All files', '*.*')),
+        ):
             with open(filename, 'w') as stream:
                 stream.write(self.text.get('1.0',END))
         return
@@ -1172,9 +1129,8 @@ class SimpleEditor(Frame):
         self.target = simpledialog.askstring('SimpleEditor', 'Search String?',
                                 initialvalue=self.target)
         if self.target:
-            where = self.text.search(self.target, INSERT, END, nocase=True)
-            if where:
-                pastit = '{}+{}c'.format(where, len(self.target))
+            if where := self.text.search(self.target, INSERT, END, nocase=True):
+                pastit = f'{where}+{len(self.target)}c'
                 self.text.tag_add(SEL, where, pastit)
                 self.text.mark_set(INSERT, pastit)
                 self.text.see(INSERT)
@@ -1244,16 +1200,13 @@ class FindReplaceDialog(Frame):
             found[col] = df[col].str.contains(s, na=False, case=case)
         #set the masked dataframe so that highlighted cells are shown on redraw
         table.highlighted = found
-        i=0
         self.coords = []
-        for r,row in found.iterrows():
-            j=0
-            for col,val in row.iteritems():
-                if val is True:
-                    #print (r,col,val, i, j)
-                    self.coords.append((i,j))
-                j+=1
-            i+=1
+        for i, (r, row) in enumerate(found.iterrows()):
+            self.coords.extend(
+                (i, j)
+                for j, (col, val) in enumerate(row.iteritems())
+                if val is True
+            )
         self.current = 0
         return
 
@@ -1387,7 +1340,7 @@ class QueryDialog(Frame):
             return
         #apply the final mask
         self.filtdf = filtdf = df[mask]
-        self.queryresultvar.set('%s rows found' %len(filtdf))
+        self.queryresultvar.set(f'{len(filtdf)} rows found')
 
         if self.applyqueryvar.get() == 1:
             #replace current dataframe but keep a copy!
@@ -1629,7 +1582,7 @@ class BaseTable(Canvas):
         self.endcol = colover
         rows = [rowover]
         cols = [colover]
-        if colover == None or rowover == None:
+        if colover is None or rowover is None:
             return
         #draw the selected rows
         if self.endrow != self.startrow:
@@ -1654,16 +1607,14 @@ class BaseTable(Canvas):
         h = self.height/self.rows
         #get coord on canvas, not window, need this if scrolling
         y = int(self.canvasy(event.y))
-        row = int(int(y)/h)
-        return row
+        return int(y / h)
 
     def get_col_clicked(self, event):
         """Get column where event on the canvas occurs"""
 
         w = self.width/self.cols
         x = int(self.canvasx(event.x))
-        col =int(int(x)/w)
-        return col
+        return int(x / w)
 
     def getCellCoords(self, row, col):
         """Get x-y coordinates to drawing a cell in a given row/col"""
